@@ -1,31 +1,50 @@
 import streamlit as st
 
-# 초기 세팅
-st.title("🏎️ 스트림릿 자동차 레이싱 게임 🏁")
+# 화면 크기 설정 (도트 해상도)
+ROWS = 20
+COLS = 40
 
-# 자동차 위치를 세션 상태로 저장
-if 'car_position' not in st.session_state:
-    st.session_state.car_position = 0
+# 자동차 초기 위치 세션 관리
+if 'car_x' not in st.session_state:
+    st.session_state.car_x = COLS // 2
+if 'car_y' not in st.session_state:
+    st.session_state.car_y = ROWS - 2
 
-# 트랙 길이 설정
-track_length = 20
+st.title("🚗 고해상도 도트 자동차 레이싱 (Streamlit) 🚗")
 
-# 버튼으로 자동차 전진
-if st.button("🚗 가속!"):
-    st.session_state.car_position += 1
+# 방향 선택 (키보드 입력 대신 버튼으로 대체)
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button("⬅️"):
+        st.session_state.car_x = max(0, st.session_state.car_x - 1)
+with col2:
+    if st.button("⬆️"):
+        st.session_state.car_y = max(0, st.session_state.car_y - 1)
+with col3:
+    if st.button("➡️"):
+        st.session_state.car_x = min(COLS - 1, st.session_state.car_x + 1)
 
-# 자동차 위치 출력
-track = ["-"] * track_length
-if st.session_state.car_position < track_length:
-    track[st.session_state.car_position] = "🚗"
-else:
-    track[-1] = "🏁"
-    st.balloons()
-    st.write("🎉 도착! 축하합니다! 🎉")
+if st.button("⬇️"):
+    st.session_state.car_y = min(ROWS - 1, st.session_state.car_y + 1)
 
-st.text("".join(track))
+# 도트 레이싱 트랙 그리기
+grid = ""
+for y in range(ROWS):
+    row = ""
+    for x in range(COLS):
+        if x == st.session_state.car_x and y == st.session_state.car_y:
+            row += "🚗"
+        elif y == 0 or y == ROWS - 1 or x == 0 or x == COLS - 1:
+            row += "⬛"
+        else:
+            row += "·"  # 도트
+    grid += row + "\n"
 
-# 다시 시작 버튼
-if st.button("🔄 다시 시작"):
-    st.session_state.car_position = 0
+# 출력
+st.text(grid)
+
+# 리셋 버튼
+if st.button("🔄 게임 리셋"):
+    st.session_state.car_x = COLS // 2
+    st.session_state.car_y = ROWS - 2
     st.experimental_rerun()
