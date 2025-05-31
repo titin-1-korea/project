@@ -52,3 +52,44 @@ def render_grid(trajectory, blink=False):
     for x, y in trajectory:
         if (x, y) != (tx, ty):
             grid[y][x] = PATH_ICON
+    # 타겟 깜빡임 처리
+    if blink:
+        grid[ty][tx] = "💥"
+    else:
+        grid[ty][tx] = TARGET_ICON
+    grid[sy][sx] = ARROW_ICON
+    return "\n".join("".join(row) for row in grid)
+
+# 경로 계산 및 미리보기
+trajectory = calculate_trajectory(angle, power)
+st.text("🎯 목표물 및 캐릭터 위치")
+st.text(render_grid([]))
+st.text("🔎 경로 미리보기")
+st.text(render_grid(trajectory))
+
+# 발사 버튼
+if st.button("발사"):
+    placeholder = st.empty()
+    hit = False
+    for i in range(len(trajectory)):
+        placeholder.text(render_grid(trajectory[:i+1]))
+        time.sleep(0.05)
+    # 마지막 경로 지점 확인 (목표물 명중 여부)
+    if trajectory and trajectory[-1] == (st.session_state.target_x, st.session_state.target_y):
+        hit = True
+    if hit:
+        # 명중 시 타겟 깜빡이기 애니메이션
+        for _ in range(3):
+            placeholder.text(render_grid(trajectory, blink=True))
+            time.sleep(0.2)
+            placeholder.text(render_grid(trajectory, blink=False))
+            time.sleep(0.2)
+        st.success("🎯 명중! 점수 +10")
+        st.session_state.score += 10
+        st.session_state.target_x = random.randint(5, COLS - 5)
+        st.session_state.target_y = random.randint(3, ROWS - 5)
+    else:
+        st.warning("❌ 빗나감")
+
+# 점수 표시
+st.subheader(f"현재 점수: {st.session_state.score}")
