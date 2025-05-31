@@ -13,13 +13,13 @@ ARROW_ICON = "➤"
 
 # 초기화
 if "target_x" not in st.session_state:
-    st.session_state.target_x = random.randint(20, COLS - 3)  # 가까운 거리
+    st.session_state.target_x = random.randint(20, COLS - 3)  # 목표물 위치
 if "target_y" not in st.session_state:
     st.session_state.target_y = random.randint(5, ROWS - 5)
 if "score" not in st.session_state:
     st.session_state.score = 0
 if "shots" not in st.session_state:
-    st.session_state.shots = 5  # 남은 화살 수
+    st.session_state.shots = 5
 
 # 각도 슬라이더
 angle = st.slider("각도를 조절하세요", -45, 45, 0)
@@ -34,9 +34,9 @@ if st.button("발사!") and st.session_state.shots > 0:
     radians = math.radians(angle)
     dx = math.cos(radians)
     dy = -math.sin(radians)
-    for _ in range(1, COLS):
-        x_pos = int(x + dx * _)
-        y_pos = int(y + dy * _)
+    for step in range(1, COLS):
+        x_pos = int(x + dx * step)
+        y_pos = int(y + dy * step)
         if 0 <= x_pos < COLS and 0 <= y_pos < ROWS:
             trajectory.append((y_pos, x_pos))
         else:
@@ -57,16 +57,20 @@ if st.button("발사!") and st.session_state.shots > 0:
     else:
         st.warning("놓쳤어요!")
 
-    # 그리드 생성 및 표시
+    # 화면 그리기
     grid = [[" " for _ in range(COLS)] for _ in range(ROWS)]
     grid[ROWS // 2][1] = PLAYER_ICON
     grid[st.session_state.target_y][st.session_state.target_x] = TARGET_ICON
     for ty, tx in trajectory:
         grid[ty][tx] = ARROW_ICON
-
     display = "\n".join("".join(row) for row in grid)
     st.text(display)
-    time.sleep(3)  # 3초 동안 경로 표시
+    time.sleep(3)  # 3초 후 초기화
 else:
-    # 각도 조절시 기본 화면 출력
-    grid = [[" " for _ in range(COLS)] for _ in range(R]()]()
+    # 기본 화면 출력
+    grid = [[" " for _ in range(COLS)] for _ in range(ROWS)]
+    grid[ROWS // 2][1] = PLAYER_ICON
+    grid[st.session_state.target_y][st.session_state.target_x] = TARGET_ICON
+    st.text("\n".join("".join(row) for row in grid))
+
+# 점수 및 남은
