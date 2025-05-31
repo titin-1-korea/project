@@ -41,8 +41,8 @@ def calculate_trajectory(angle_deg, power):
             break
     return trajectory
 
-# 격자 출력(가로로 회전)
-def render_grid_rotated(trajectory, highlight_last=False):
+# 격자 출력(한 화면 가로)
+def render_grid_horizontal_one_line(trajectory, highlight_last=False):
     grid = [[EMPTY_ICON for _ in range(COLS)] for _ in range(ROWS)]
     tx, ty = st.session_state.target_x, st.session_state.target_y
     if 0 <= tx < COLS and 0 <= ty < ROWS:
@@ -57,25 +57,25 @@ def render_grid_rotated(trajectory, highlight_last=False):
         for x, y in trajectory:
             if 0 <= x < COLS and 0 <= y < ROWS:
                 grid[y][x] = PATH_ICON
-    # 행을 열로 뒤집어서 가로로 출력
-    rotated = ["".join([grid[row][col] for row in range(ROWS)]) for col in range(COLS)]
-    return "\n".join(rotated)
 
-# 🎯 목표 위치 먼저 표시
-st.subheader("🎯 목표물 및 캐릭터 위치 (가로 보기)")
-st.code(render_grid_rotated([]))
+    # 각 행을 붙여서 하나의 긴 문자열로 반환
+    return "".join(["".join(row) for row in grid])
+
+# 🎯 목표 위치 출력
+st.subheader("🎯 목표물 및 캐릭터 위치 (한 화면 가로 출력)")
+st.code(render_grid_horizontal_one_line([]))
 
 # 🔎 경로 미리보기
 trajectory = calculate_trajectory(angle, power)
-st.subheader("🔎 경로 미리보기 (가로 보기)")
-st.code(render_grid_rotated(trajectory))
+st.subheader("🔎 경로 미리보기 (한 화면 가로 출력)")
+st.code(render_grid_horizontal_one_line(trajectory))
 
 # 발사 버튼
 if st.button("발사"):
     hit = False
     placeholder = st.empty()
     for i in range(len(trajectory)):
-        placeholder.code(render_grid_rotated(trajectory[:i+1], highlight_last=True))
+        placeholder.code(render_grid_horizontal_one_line(trajectory[:i+1], highlight_last=True))
         time.sleep(0.05)
     for x, y in trajectory:
         if abs(x - st.session_state.target_x) <= 1 and abs(y - st.session_state.target_y) <= 1:
