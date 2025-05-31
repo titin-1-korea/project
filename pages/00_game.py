@@ -41,16 +41,13 @@ def calculate_trajectory(angle_deg, power):
             break
     return trajectory
 
-# 격자 출력
+# 격자 출력 함수
 def render_grid(trajectory, highlight_last=False):
     grid = [[EMPTY_ICON for _ in range(COLS)] for _ in range(ROWS)]
-    # 타겟
     tx, ty = st.session_state.target_x, st.session_state.target_y
     grid[ty][tx] = TARGET_ICON
-    # 시작 위치
     sx, sy = COLS // 2, ROWS - 1
     grid[sy][sx] = ARROW_ICON
-    # 경로
     if highlight_last and trajectory:
         x, y = trajectory[-1]
         grid[y][x] = PATH_ICON
@@ -58,6 +55,11 @@ def render_grid(trajectory, highlight_last=False):
         for x, y in trajectory:
             grid[y][x] = PATH_ICON
     return "\n".join("".join(row) for row in grid)
+
+# ✅ 여기 추가: 초기 격자 출력 (타겟 + 캐릭터만)
+initial_grid = render_grid([])
+st.text("🎯 목표물 및 캐릭터 위치")
+st.text(initial_grid)
 
 # 경로 계산 및 미리보기
 trajectory = calculate_trajectory(angle, power)
@@ -75,13 +77,4 @@ if st.button("발사"):
         if abs(x - st.session_state.target_x) <= 1 and abs(y - st.session_state.target_y) <= 1:
             hit = True
             break
-    if hit:
-        st.success("🎯 명중! 점수 +10")
-        st.session_state.score += 10
-        st.session_state.target_x = random.randint(5, COLS - 5)
-        st.session_state.target_y = random.randint(3, ROWS - 5)
-    else:
-        st.warning("❌ 빗나감")
-
-# 점수 표시
-st.subheader(f"현재 점수: {st.session_state.score}")
+    i
