@@ -3,7 +3,7 @@ import math
 import random
 import time
 
-st.title("🎯 슈팅 게임 - 각도 조절, 목표 맞추기!")
+st.title("🎯 슈팅 게임 - 가로 출력")
 
 # 격자 크기
 ROWS, COLS = 20, 40
@@ -12,7 +12,7 @@ ARROW_ICON = "🡆"
 PATH_ICON = "*"
 EMPTY_ICON = "."
 
-# 세션 상태 초기화 (안전한 범위로)
+# 세션 상태 초기화
 if 'score' not in st.session_state:
     st.session_state.score = 0
 if 'target_x' not in st.session_state:
@@ -20,16 +20,16 @@ if 'target_x' not in st.session_state:
 if 'target_y' not in st.session_state:
     st.session_state.target_y = random.randint(1, ROWS - 2)
 
-# 각도, 파워 조절
+# 각도 및 파워 슬라이더
 angle = st.slider("각도(도)", 10, 170, 45)
 power = st.slider("파워", 10, 100, 50)
 
-# 포물선 경로 계산 함수
+# 포물선 경로 계산
 def calculate_trajectory(angle_deg, power):
     trajectory = []
     vx = math.cos(math.radians(angle_deg)) * power / 10
     vy = math.sin(math.radians(angle_deg)) * power / 10
-    x, y = COLS // 2, ROWS - 1  # 중앙 하단 시작
+    x, y = COLS // 2, ROWS - 1
     t = 0
     while True:
         xt = int(x + vx * t)
@@ -41,39 +41,41 @@ def calculate_trajectory(angle_deg, power):
             break
     return trajectory
 
-# 격자 렌더링 (가로 스크롤용)
-def render_grid(trajectory, highlight_last=False):
+# 격자 출력(가로로 회전)
+def render_grid_rotated(trajectory, highlight_last=False):
     grid = [[EMPTY_ICON for _ in range(COLS)] for _ in range(ROWS)]
     tx, ty = st.session_state.target_x, st.session_state.target_y
-    if 0 <= ty < ROWS and 0 <= tx < COLS:
+    if 0 <= tx < COLS and 0 <= ty < ROWS:
         grid[ty][tx] = TARGET_ICON
     sx, sy = COLS // 2, ROWS - 1
     grid[sy][sx] = ARROW_ICON
     if highlight_last and trajectory:
         x, y = trajectory[-1]
-        if 0 <= y < ROWS and 0 <= x < COLS:
+        if 0 <= x < COLS and 0 <= y < ROWS:
             grid[y][x] = PATH_ICON
     else:
         for x, y in trajectory:
-            if 0 <= y < ROWS and 0 <= x < COLS:
+            if 0 <= x < COLS and 0 <= y < ROWS:
                 grid[y][x] = PATH_ICON
-    return "\n".join("".join(row) for row in grid)
+    # 행을 열로 뒤집어서 가로로 출력
+    rotated = ["".join([grid[row][col] for row in range(ROWS)]) for col in range(COLS)]
+    return "\n".join(rotated)
 
 # 🎯 목표 위치 먼저 표시
-st.subheader("🎯 목표물 및 캐릭터 위치")
-st.code(render_grid([]))  # 가로 스크롤 허용
+st.subheader("🎯 목표물 및 캐릭터 위치 (가로 보기)")
+st.code(render_grid_rotated([]))
 
 # 🔎 경로 미리보기
 trajectory = calculate_trajectory(angle, power)
-st.subheader("🔎 경로 미리보기")
-st.code(render_grid(trajectory))
+st.subheader("🔎 경로 미리보기 (가로 보기)")
+st.code(render_grid_rotated(trajectory))
 
 # 발사 버튼
 if st.button("발사"):
     hit = False
     placeholder = st.empty()
     for i in range(len(trajectory)):
-        placeholder.code(render_grid(trajectory[:i+1], highlight_last=True))
+        placeholder.code(render_grid_rotated(trajectory[:i+1], highlight_last=True))
         time.sleep(0.05)
     for x, y in trajectory:
         if abs(x - st.session_state.target_x) <= 1 and abs(y - st.session_state.target_y) <= 1:
@@ -87,5 +89,5 @@ if st.button("발사"):
     else:
         st.warning("❌ 빗나감")
 
-# 점수 표시
+# 점수 출력
 st.subheader(f"현재 점수: {st.session_state.score}")
