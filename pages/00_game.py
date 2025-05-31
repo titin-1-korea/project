@@ -23,6 +23,9 @@ st.title("🎯 슈팅 게임 - 한 화면 가로 출력")
 angle = st.slider("각도(도)", 10, 170, 45)
 power = st.slider("파워", 10, 100, 50)
 
+# 발사 버튼을 여기로 이동
+fire = st.button("발사")
+
 # 포물선 경로 계산
 def calculate_trajectory(angle_deg, power):
     trajectory = []
@@ -61,8 +64,8 @@ st.text_area("한 화면 보기", render_grid([]), height=ROWS*15)
 st.text("🔎 경로 미리보기 (한 화면 가로 출력)")
 st.text_area("한 화면 보기", render_grid(trajectory), height=ROWS*15)
 
-# 발사 버튼
-if st.button("발사"):
+# 발사 동작
+if fire:
     hit = False
     placeholder = st.empty()
     for i in range(len(trajectory)):
