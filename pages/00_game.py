@@ -24,7 +24,7 @@ if 'target_y' not in st.session_state:
 angle = st.slider("각도(도)", 10, 170, 45)
 power = st.slider("파워", 10, 100, 50)
 
-# 포물선 경로 계산
+# 포물선 경로 계산 함수
 def calculate_trajectory(angle_deg, power):
     trajectory = []
     vx = math.cos(math.radians(angle_deg)) * power / 10
@@ -41,7 +41,7 @@ def calculate_trajectory(angle_deg, power):
             break
     return trajectory
 
-# 격자 그리드 생성
+# 격자 그리드 생성 함수
 def render_grid(trajectory, highlight_last=False):
     grid = [[EMPTY_ICON for _ in range(COLS)] for _ in range(ROWS)]
     # 타겟 표시
@@ -57,16 +57,4 @@ def render_grid(trajectory, highlight_last=False):
     else:
         for x, y in trajectory:
             grid[y][x] = PATH_ICON
-    return "\n".join("".join(row) for row in grid)
-
-trajectory = calculate_trajectory(angle, power)
-st.text("🔎 경로 미리보기")
-st.text(render_grid(trajectory))
-
-if st.button("발사"):
-    hit = False
-    placeholder = st.empty()
-    for i in range(len(trajectory)):
-        placeholder.text(render_grid(trajectory[:i+1], highlight_last=True))
-        time.sleep(0.05)
-    for x, y in trajectory:
+    return "\n".join("".join(row) for
