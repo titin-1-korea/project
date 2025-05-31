@@ -1,77 +1,87 @@
 import streamlit as st
-import random
 import math
+import random
+import time
 
-# 화면 크기 설정
-ROWS, COLS = 20, 60
+st.title("🎯 슈팅 게임 - 각도 조절, 목표 맞추기!")
 
-# 캐릭터, 목표물, 발사체 설정
-PLAYER_ICON = "🏹"
+# 격자 크기
+ROWS, COLS = 20, 40
 TARGET_ICON = "🎯"
-ARROW_ICON = "➶"
+ARROW_ICON = "🡆"
+PATH_ICON = "*"
+EMPTY_ICON = "."
 
-# 초기 상태 설정
-if "target_x" not in st.session_state:
-    st.session_state.target_x = random.randint(5, COLS - 5)
-    st.session_state.target_y = random.randint(3, ROWS - 5)
-if "score" not in st.session_state:
+# 세션 상태 초기화
+if 'score' not in st.session_state:
     st.session_state.score = 0
-if "shots" not in st.session_state:
-    st.session_state.shots = 5
-if "angle" not in st.session_state:
-    st.session_state.angle = 0
+if 'target_x' not in st.session_state:
+    st.session_state.target_x = random.randint(5, COLS - 5)
+if 'target_y' not in st.session_state:
+    st.session_state.target_y = random.randint(3, ROWS - 5)
 
-# 화면 설명
-st.title("🎯 마우스로 각도 조절 슈팅 게임")
-st.markdown("**목표물(🎯)을 향해 화살(➶)을 쏘세요! 각도는 마우스로 조절합니다.**")
-st.text(f"점수: {st.session_state.score} | 남은 화살: {st.session_state.shots}")
+# 각도, 파워 조절
+angle = st.slider("각도(도)", 10, 170, 45)
+power = st.slider("파워", 10, 100, 50)
 
-# 각도 입력 슬라이더
-angle = st.slider("발사 각도", -90, 90, st.session_state.angle)
-st.session_state.angle = angle
-
-# '발사' 버튼
-if st.button("발사!"):
-    if st.session_state.shots > 0:
-        st.session_state.shots -= 1
-        # 화살 경로 계산
-        distance = COLS - 10  # 화살 최대 거리
-        rad = math.radians(angle)
-        arrow_x = int(distance * math.cos(rad))
-        arrow_y = int(distance * math.sin(rad))
-        hit_x = 10 + arrow_x
-        hit_y = ROWS // 2 - arrow_y
-
-        # 화면 그리드 생성
-        grid = [[" " for _ in range(COLS)] for _ in range(ROWS)]
-        # 목표물 표시
-        grid[st.session_state.target_y][st.session_state.target_x] = TARGET_ICON
-        # 플레이어 표시
-        grid[ROWS // 2][10] = PLAYER_ICON
-        # 화살 표시
-        if 0 <= hit_x < COLS and 0 <= hit_y < ROWS:
-            grid[hit_y][hit_x] = ARROW_ICON
-
-        # 명중 여부
-        if abs(hit_x - st.session_state.target_x) <= 1 and abs(hit_y - st.session_state.target_y) <= 1:
-            st.success("🎯 명중! 점수 +10")
-            st.session_state.score += 10
+# 포물선 경로 계산
+def calculate_trajectory(angle_deg, power):
+    trajectory = []
+    vx = math.cos(math.radians(angle_deg)) * power / 10
+    vy = math.sin(math.radians(angle_deg)) * power / 10
+    x, y = COLS // 2, ROWS - 1  # 중앙 하단
+    t = 0
+    while True:
+        xt = int(x + vx * t)
+        yt = int(y - (vy * t - 0.5 * 0.8 * t ** 2))
+        if 0 <= xt < COLS and 0 <= yt < ROWS:
+            trajectory.append((xt, yt))
+            t += 0.1
         else:
-            st.warning("❌ 빗나감")
+            break
+    return trajectory
 
-        # 그리드 출력
-        st.text("\n".join("".join(row) for row in grid))
+# 격자 출력
+def render_grid(trajectory, highlight_last=False):
+    grid = [[EMPTY_ICON for _ in range(COLS)] for _ in range(ROWS)]
+    # 타겟
+    tx, ty = st.session_state.target_x, st.session_state.target_y
+    grid[ty][tx] = TARGET_ICON
+    # 시작 위치
+    sx, sy = COLS // 2, ROWS - 1
+    grid[sy][sx] = ARROW_ICON
+    # 경로
+    if highlight_last and trajectory:
+        x, y = trajectory[-1]
+        grid[y][x] = PATH_ICON
     else:
-        st.warning("💥 화살이 모두 소진되었습니다!")
+        for x, y in trajectory:
+            grid[y][x] = PATH_ICON
+    return "\n".join("".join(row) for row in grid)
 
-# '다음 목표물 생성' 버튼
-if st.button("다음 목표물 생성"):
-    st.session_state.target_x = random.randint(5, COLS - 5)
-    st.session_state.target_y = random.randint(3, ROWS - 5)
+# 경로 계산 및 미리보기
+trajectory = calculate_trajectory(angle, power)
+st.text("🔎 경로 미리보기")
+st.text(render_grid(trajectory))
 
-# 게임 재시작 버튼
-if st.button("게임 재시작"):
-    st.session_state.score = 0
-    st.session_state.shots = 5
-    st.session_state.target_x = random.randint(5, COLS - 5)
-    st.session_state.target_y = random.randint(3, ROWS - 5)
+# 발사 버튼
+if st.button("발사"):
+    hit = False
+    placeholder = st.empty()
+    for i in range(len(trajectory)):
+        placeholder.text(render_grid(trajectory[:i+1], highlight_last=True))
+        time.sleep(0.05)
+    for x, y in trajectory:
+        if abs(x - st.session_state.target_x) <= 1 and abs(y - st.session_state.target_y) <= 1:
+            hit = True
+            break
+    if hit:
+        st.success("🎯 명중! 점수 +10")
+        st.session_state.score += 10
+        st.session_state.target_x = random.randint(5, COLS - 5)
+        st.session_state.target_y = random.randint(3, ROWS - 5)
+    else:
+        st.warning("❌ 빗나감")
+
+# 점수 표시
+st.subheader(f"현재 점수: {st.session_state.score}")
